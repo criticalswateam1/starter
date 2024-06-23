@@ -1,0 +1,136 @@
+---
+title: "Installation"
+description: ""
+---
+
+<Info>**Please ensure all the dependencys have been installed.**</Info>
+
+Step 1. Run the install script:
+
+<CodeGroup>
+
+```bash
+sudo curl -sSL https://raw.githubusercontent.com/DDOS-Guardian/DDoS-Guardian/main/setup_ddosguardian_service.sh | sudo bash
+```
+
+</CodeGroup>
+
+Once downloaded check the status of the guardian service. If it is online you can proceed.
+
+```bash
+systemctl status guardian
+```
+
+Step 2. File Preparation:
+
+```bash
+mkdir /etc/nginx/conf.d/ddos-guardian-layer-7
+cd /etc/nginx/conf.d
+mv protection.lua /etc/nginx/conf.d/ddos-guardian-layer-7
+```
+
+### Configuratuion
+
+1. Add your server's IP address to the whitelist.
+
+```bash
+local whitelist = {
+  "127.0.0.1",
+  "YOURSERVERIP",
+}
+```
+
+2. Obtain your Cloudflare Turnstile Key from https://cloudflare.com
+
+- Login, navigate to Dashboard > Turnstile, create a new Turnstile configuration, and retrieve the Site Key.
+  You will see an error like this if you try to run Mintlify in a port that's already taken:
+
+3. Modify your `protection.lua` configuration with the turnstile key.
+
+## Packages
+
+Run the following command below to install the required packages for NGINX to function with the anti-ddos sytem.
+
+```
+sudo apt-get install libnginx-mod-http-lua
+```
+
+## Editing NGINX Configuration
+
+We will need to edit the NGINX ( Webserver ) configuration.
+
+1. Change Directories
+
+```bash
+cd /etc/nginx
+```
+
+2. Navigate to the folder `sites-available`.
+   If using pterodactyl panel edit the `pterodactyl.conf` file.
+   `nano pterodactyl.conf`
+
+Add the following at the top of the file.
+
+```
+lua_shared_dict ddos_guardian_limit_dict 10m;
+```
+
+Add the following into the location block.
+
+```
+access_by_lua_file /etc/nginx/conf.d/ddos-guardian-layer-7/protection.lua;
+
+```
+
+If you are not using pterodactyl edit the `default file`
+`nano default`
+Add the following at the top of the file.
+
+```
+lua_shared_dict ddos_guardian_limit_dict 10m;
+```
+
+Add the following into the location block.
+
+```
+access_by_lua_file /etc/nginx/conf.d/ddos-guardian-layer-7/protection.lua;
+```
+
+<Tip>
+
+To leave nano and save any modifications, use CONTROL + Q, then press Y and Enter.
+
+</Tip>
+## Deployment
+
+Run the following command to check that your NGINX Configuration file is correct.
+
+```bash
+nginx -t
+```
+
+<Frame>
+  <img src="/images/nginxtest.png" style={{ borderRadius: "0.5rem" }} />
+</Frame>
+
+Simply run the following command below and visit your domain and the anti-ddos should be setup.
+
+```bash
+systemctl restart nginx
+```
+
+## Troubleshooting
+
+Here's how to solve some common problems when working with the CLI.
+
+<AccordionGroup>
+  <Accordion title="Error 500">
+    Please ensure your service is running and check your configuration files.
+  </Accordion>
+</AccordionGroup>
+
+<Info>
+  **To install Level 7 DDOS Protection simply replace protection.lua with this
+  file .
+  https://raw.githubusercontent.com/DDOS-Guardian/DDoS-Guardian-Layer-7/main/protection.lua**
+</Info>
